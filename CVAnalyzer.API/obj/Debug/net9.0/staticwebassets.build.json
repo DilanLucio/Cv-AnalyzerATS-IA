@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "xgcY7O+crIyuS+yLV92KI8rxtAzqBdEUBYqK3v0F9V4=",
+  "Source": "CVAnalyzer.API",
+  "BasePath": "_content/CVAnalyzer.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

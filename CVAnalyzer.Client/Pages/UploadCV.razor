@@ -1,0 +1,185 @@
+@page "/"
+@using System.Text
+@inject HttpClient Http
+
+<div class="flex flex-col min-h-screen font-sans text-[var(--text-primary)] bg-[var(--background-color)]">
+    <header class="sticky top-0 z-10 bg-[var(--background-color)] shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-xl font-bold text-[var(--primary-color)]">PDF Analyzer</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+       
+            <div class="flex flex-col items-center justify-center space-y-6">
+                <h2 class="text-3xl font-bold text-center">Sube tu CV en PDF</h2>
+
+                <div class="w-full max-w-lg">
+                    <label
+                        class="flex flex-col items-center justify-center p-12 border-4 border-dashed border-[var(--primary-color)] rounded-3xl bg-[var(--accent-color)] bg-opacity-20 text-center cursor-pointer hover:bg-opacity-30 transition-all duration-200">
+                        <span class="material-symbols-outlined text-6xl text-[var(--primary-color)]">upload_file</span>
+                        <span class="mt-2 text-xl font-semibold">Arrastra o selecciona tu PDF</span>
+                        <InputFile OnChange="HandleFileSelected" class="sr-only" />
+                    </label>
+                </div>
+
+                <button class="rounded-lg h-12 px-5 bg-[#141414] text-white font-bold disabled:opacity-50"
+                    @onclick="OnAnalyzeCV" disabled="@(!CanAnalyze)">
+                    Analizar CV
+                </button>
+
+                @if (!string.IsNullOrEmpty(Message))
+                {
+                    <p class="px-4 text-sm text-gray-600">@Message</p>
+                }
+            </div>
+
+            <div
+                class="relative w-full h-[600px] bg-gray-100 rounded-3xl overflow-hidden flex items-center justify-center shadow-lg border border-gray-200">
+                @if (IsAnalyzing)
+                {
+                    <div class="text-center text-[var(--text-secondary)]">
+                        <span class="material-symbols-outlined text-8xl animate-spin">autorenew</span>
+                        <p class="mt-4 text-lg">Analizando CV...</p>
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(ResultMessage))
+                {
+                    <div class="p-6 text-[#141414] text-base overflow-y-auto w-full h-full bg-white whitespace-pre-line">
+                        @ResultMessage
+                    </div>
+                }
+                else if (!string.IsNullOrEmpty(PdfUrl))
+                {
+                    <iframe src="@PdfUrl" class="w-full h-full" style="border:none;"></iframe>
+                }
+                else
+                {
+                    <div class="text-center text-[var(--text-secondary)]">
+                        <span class="material-symbols-outlined text-8xl">picture_as_pdf</span>
+                        <p class="mt-4 text-lg">Tu PDF aparecerá aquí</p>
+                    </div>
+                }
+            </div>
+
+        </div>
+    </main>
+</div>
+
+@code {
+    private IBrowserFile? selectedFile;
+    private string Message = "";
+    private string CvText = "";
+    private string ResultMessage = "";
+    private string? PdfUrl;
+    private bool IsAnalyzing = false;
+
+
+    private bool CanAnalyze => !string.IsNullOrEmpty(CvText);
+
+    private async void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        Message = $"📄 Archivo seleccionado: {selectedFile.Name}";
+        ResultMessage = "";
+        PdfUrl = null;
+        CvText = "";
+
+        try
+        {
+            using var stream = selectedFile.OpenReadStream(50_000_000);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+            PdfUrl = $"data:application/pdf;base64,{Convert.ToBase64String(bytes)}";
+            StateHasChanged();
+
+            await UploadFile();
+        }
+        catch (Exception ex)
+        {
+            Message = $"⚠️ Error al procesar archivo: {ex.Message}";
+        }
+    }
+
+    private async Task UploadFile()
+    {
+        if (selectedFile == null) return;
+
+        try
+        {
+            using var fileStream = selectedFile.OpenReadStream(50_000_000);
+            using var streamContent = new StreamContent(fileStream);
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+            using var content = new MultipartFormDataContent
+{
+{ streamContent, "file", selectedFile.Name }
+};
+
+            var response = await Http.PostAsync("http://localhost:5219/upload-cv", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                var result = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+                CvText = result?["content"] ?? "";
+                Message = "✅ Texto del CV extraído correctamente";
+                StateHasChanged(); 
+            }
+            else
+            {
+                Message = $"❌ Error al subir: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            Message = $"⚠️ Excepción: {ex.Message}";
+        }
+    }
+
+    private async Task OnAnalyzeCV()
+    {
+        if (string.IsNullOrWhiteSpace(CvText))
+        {
+            ResultMessage = "❌ El texto está vacío.";
+            return;
+        }
+
+        IsAnalyzing = true;
+        ResultMessage = "";
+        StateHasChanged();
+
+        try
+        {
+            var data = new Dictionary<string, string> { { "text", CvText } };
+            var content = new StringContent(System.Text.Json.JsonSerializer.Serialize(data), Encoding.UTF8, "application/json");
+
+            var response = await Http.PostAsync("http://localhost:5219/analyze-cv", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var raw = await response.Content.ReadAsStringAsync();
+                var result = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(raw);
+                ResultMessage = result?["analysis"] ?? "(Sin respuesta de Gemini)";
+            }
+            else
+            {
+                ResultMessage = $"❌ Error: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            ResultMessage = $"⚠️ Excepción: {ex.Message}";
+        }
+
+        IsAnalyzing = false;
+        StateHasChanged();
+    }
+
+}
+

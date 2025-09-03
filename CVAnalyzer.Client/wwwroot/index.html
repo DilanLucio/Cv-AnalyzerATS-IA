@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Analyzer</title>
+
+  <base href="/" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64," />
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="lib/bootstrap/dist/css/bootstrap.min.css" />
+
+  <!-- Blazor styles -->
+  <link rel="stylesheet" href="css/app.css" />
+  <link href="CVAnalyzer.Client.styles.css" rel="stylesheet" />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com" rel="preconnect" />
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+  <link
+    href="https://fonts.googleapis.com/css2?display=swap&amp;family=Inter:wght@400;500;700;900&amp;family=Noto+Sans:wght@400;500;700;900"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@400;500;700&amp;display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+  <!-- Custom variables -->
+  <style type="text/tailwindcss">
+    :root {
+      --primary-color: #f9f506;
+      --secondary-color: #fffb4d;
+      --background-color: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #4d4d4d;
+      --accent-color: #fefc80;
+      --border-radius-none: 0;
+      --border-radius-sm: 0.125rem;
+      --border-radius-md: 0.375rem;
+      --border-radius-lg: 0.5rem;
+      --border-radius-xl: 0.75rem;
+      --border-radius-2xl: 1rem;
+      --border-radius-3xl: 1.5rem;
+      --border-radius-full: 9999px;
+    }
+
+    body {
+      font-family: 'Spline Sans', sans-serif;
+      background-color: var(--background-color);
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <svg class="loading-progress">
+      <circle r="40%" cx="50%" cy="50%" />
+      <circle r="40%" cx="50%" cy="50%" />
+    </svg>
+    <div class="loading-progress-text"></div>
+  </div>
+  <script src="_framework/blazor.webassembly.js"></script>
+</body>
+
+</html>
