@@ -100,7 +100,7 @@ Abrir en el navegador:
 📌 CV cargado
 📌 Análisis generado por IA
 
-(Agrega aquí screenshots en /docs/screenshots para que se vean pro en GitHub)
+
 
 📂 Estructura del proyecto
 bash
